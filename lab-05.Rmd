@@ -7,11 +7,21 @@ output: html_notebook
 
 ### Load packages and data
 
+For our analysis, in addition to the dsbox package, we will use the following packages for data wrangling and visualisation.
+
+*tidyverse* for data wrangling and visualization
+
+*stringr* for fast, correct implementations of common string manipulations
+
 ```{r load-packages, message = FALSE}
 library(tidyverse) 
 library(dsbox) 
 library(stringr)
 ```
+
+## Data prep
+
+For accessability purposes, the required dataframes of Denny's and La Quinta are saved as local variables.
 
 ```{r}
 dn <- dennys
@@ -115,13 +125,13 @@ Describe the distribution of the distances Denny’s and the nearest La Quinta l
 ggplot(data = dn_lq_ak_mindist, aes(y = closest)) +
   geom_boxplot(fill="cadetblue1") + 
   theme_bw() + 
-  labs(title = "Distance distribution of Denny's and La Quinta in Alaska", 
+  labs(title = "Distance distribution of Denny's and La Quinta in Alaska I", 
        x = "", y = "Distance [km]")
 
 ggplot(data = dn_lq_ak_mindist, aes(x = closest)) + 
- geom_dotplot() +
+ geom_dotplot(binwidth = 0.25) +
   theme_bw() + 
-  labs(title = "Distance distribution in Alaska", 
+  labs(title = "Distance distribution of Denny's and La Quinta in Alaska II", 
        x = "Distance [km]", y = "")
 ```
 
@@ -145,13 +155,13 @@ ggplot(data = dn_lq_nc_mindist, aes(y = closest)) +
   geom_boxplot() +
   geom_boxplot(fill="cadetblue1") + 
   theme_bw() +
-  labs(title = "Distance distribution of Denny's and La Quinta in North Carolina", 
+  labs(title = "Distance distribution of Denny's and La Quinta in North Carolina I", 
        x = "", y = "Distance [km]")
 
 ggplot(data = dn_lq_nc_mindist, aes(x = closest)) + 
- geom_dotplot() +
+ geom_dotplot(binwidth = 10) +
   theme_bw() + 
-  labs(title = "Distance distribution in North Carolina", 
+  labs(title = "Distance distribution of Denny's and La Quinta in North Carolina II", 
        x = "Distance [km]", y = "")
 ```
 
@@ -175,13 +185,13 @@ ggplot(data = dn_lq_tx_mindist, aes(y = closest)) +
   geom_boxplot() + 
   geom_boxplot(fill="cadetblue1") + 
   theme_bw() +
-  labs(title = "Distance distribution of Denny's and La Quinta in Texas", 
+  labs(title = "Distance distribution of Denny's and La Quinta in Texas I", 
        x = "", y = "Distance [km]")
 
 ggplot(data = dn_lq_tx_mindist, aes(x = closest)) + 
- geom_dotplot() +
+ geom_dotplot(binwidth = 0.65) +
   theme_bw() + 
-  labs(title = "Distance distribution in Texas", 
+  labs(title = "Distance distribution of Denny's and La Quinta in Texas II", 
        x = "Distance [km]", y = "")
 ```
 
@@ -207,13 +217,13 @@ ggplot(data = dn_lq_ny_mindist, aes(y = closest)) +
   geom_boxplot() + 
   geom_boxplot(fill="cadetblue1") + 
   theme_bw() +
-  labs(title = "Distance distribution of Denny's and La Quinta in New York", 
+  labs(title = "Distance distribution of Denny's and La Quinta in New York I", 
        x = "", y = "Distance [km]")
 
 ggplot(data = dn_lq_ny_mindist, aes(x = closest)) + 
- geom_dotplot() +
+ geom_dotplot(binwidth = 5) +
   theme_bw() + 
-  labs(title = "Distance distribution in New York", 
+  labs(title = "Distance distribution of Denny's and La Quinta in New York II", 
        x = "Distance [km]", y = "")
 ```
 
@@ -233,19 +243,20 @@ Besides, New York as self-defined state in the U.S. does not hold the joke, beca
 ```{r}
 analyze_state <- function(this_state) {
   
+  # Define Denny's dataframe filtered by state
   dn_state <- dn %>%
     filter(state == this_state)
-  
+  # Define La Quinta's dataframe filtered by state  
   lq_state <- lq %>%
     filter(state == this_state)
-  
+  # Define dataframe with min distances and calculate distances between two locations with the haversine function
   dm_lq_state_mindist <-- full_join(dn_state, lq_state, by = "state") %>%
     mutate(
       distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 4)
     ) %>%
     group_by(address.x) %>%
     summarise(closest = min(distance))
-  
+  # Return the final dataframe for further processing
   return( dm_lq_state_mindist )
 }
 ```
@@ -255,7 +266,7 @@ analyze_state <- function(this_state) {
 
 ```{r}
 FastFoodRestaurants <- read_csv("FastFoodRestaurants.csv")
-
+# Clean the existing FastFoodRestaurants dataframe
 FastFoodRestaurants <- FastFoodRestaurants %>% 
   rename(state = province) %>%
   mutate(name = tolower(name),
@@ -263,116 +274,81 @@ FastFoodRestaurants <- FastFoodRestaurants %>%
          name = str_replace_all(name, fixed("'"), ""),
          name = str_replace_all(name, fixed("/"), ""),
          name = str_replace_all(name, fixed("-"), ""))
-
-
-# fastfood_ny <- FastFoodRestaurants %>% 
-#   filter(province == "NY")
-# 
-# FastFoodRestaurants <- FastFoodRestaurants %>%
-#   mutate(state = province) %>%
-#   mutate(name = tolower(name),
-#          name = str_replace_all(name, fixed(" "), ""),
-#          name = str_replace_all(name, fixed("'"), ""))
-# 
-# 
-# fastfood_ny <- full_join(dennys %>% filter(state =="NY"), fastfood_ny, by = "state")
-# 
-# 
-# lq_ff_ny <- full_join(laquinta %>% filter(state == "NY"), fastfood_ny, by = "state") %>%
-#   mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y))
-# 
-# 
-# #lq_ff <- full_join(laquinta, FastFoodRestaurants, by = "state") %>%
-# #  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y))
-# #lq_ff
-# 
-# lq_ff_ny <- lq_ff_ny %>%
-#   group_by(address.x, name.x) %>%
-#   summarise(closest = min(distance))
-# lq_ff_ny
-# 
-# test <- FastFoodRestaurants %>% filter(name == "mcdonalds", state == "NY")
-# 
-# ggplot(data = lq_ff_ny, aes(x = closest)) + 
-#  geom_dotplot() +
-#   theme_bw() + 
-#   labs(title = "", 
-#        x = "Distance [km]", y = "")
-
 ```
 
 4. Create a function that takes a "state" as input and produces a dataframe, where there is one observation per "la quinta" and it lists distance to nearest "Restaurant". WHEN YOU BUILD THIS FUNCTION ... ensure it is pulling a sample from the state of interest AND that the sample size is similar to the number of Denny's in the state.  (Hint - use "sample_n" function from dplyr.)
 
 ```{r}
-test <- function(this_state, this_restaurant) {
-  
+analyze_distance_with_selection <- function(this_state, this_restaurant) {
+  # Define Denny's dataframe filtered by state  
   dn_state <- dn %>%
     filter(state == this_state)
-  
+  # Define La Quinta's dataframe filtered by state   
   lq_state <- lq %>%
     filter(state == this_state)
-  
+  # Define FastFoodRestaurants's dataframe filtered by state and specified fast food chain  
   fastfood_state <- FastFoodRestaurants %>%
     filter(state == this_state) %>%
     filter(name == this_restaurant)
-  
+  # create fastfood dataframe sample according to size of denny's dataframe (for comparison reasons)
   fastfood_sample <- sample_n(fastfood_state, nrow(dn_state))
-  
-  dn_mindist <- full_join(dn_state, lq_state, by = "state") %>%
+  # Define dataframe with min distances and calculate distances between two locations with the haversine function - La Quinta and Denny's
+  dn_mindist <- full_join(lq_state, dn_state, by = "state") %>%
     mutate(
       distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 4)
     ) %>%
     group_by(address.x) %>%
     summarise(closest = min(distance)) %>%
     mutate(name = "dennys")
-
-  ff_mindist <- full_join(fastfood_sample, lq_state, by = "state") %>%
+  fastfood_sample <- sample_n(fastfood_state, nrow(dn_state))
+  # Define dataframe with min distances and calculate distances between two locations with the haversine function - La Quinta and specific fast food restaurant
+  ff_mindist <- full_join(lq_state, fastfood_sample, by = "state") %>%
     mutate(
       distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 4)
     ) %>%
     group_by(address.x) %>%
     summarise(closest = min(distance)) %>%
     mutate(name = this_restaurant)
-  
+  # Define final dataframe with all required data
   df_final <- full_join(dn_mindist, ff_mindist, by = "address.x")
-  
-  
-  return (ff_mindist)
+  # Return the final dataframe for further processing  
+  return (df_final)
 }
 ```
 
+5. Do some comparative analysis on several states of interest.   Are "denny's" any closer than the "other" restaurant?
+
 ```{r}
-test_df <- test("NY", "mcdonalds")
+
+df_lq_dn_mc_ak <- analyze_distance_with_selection("AK", "mcdonalds")
+
+ggplot(data = df_lq_dn_mc_ak, aes(y = closest.x)) +
+  geom_boxplot() + 
+  geom_boxplot(fill="cadetblue1") + 
+  theme_bw() +
+  labs(title = "Distance distribution of Denny's and La Quinta in Alaska", 
+       x = "", y = "Distance [km]")
+ggplot(data = df_lq_dn_mc_ak, aes(y = closest.y)) +
+  geom_boxplot() + 
+  geom_boxplot(fill="orange1") + 
+  theme_bw() +
+  labs(title = "Distance distribution of McDonald's and La Quinta in Alaska", 
+       x = "", y = "Distance [km]")
+
+
+df_lq_dn_mc_ny <- analyze_distance_with_selection("NY", "mcdonalds")
+
+ggplot(data = df_lq_dn_mc_ny, aes(y = closest.x)) +
+  geom_boxplot() + 
+  geom_boxplot(fill="cadetblue1") + 
+  theme_bw() +
+  labs(title = "Distance distribution of Denny's and La Quinta in New York", 
+       x = "", y = "Distance [km]")
+ggplot(data = df_lq_dn_mc_ny, aes(y = closest.y)) +
+  geom_boxplot() + 
+  geom_boxplot(fill="orange1") + 
+  theme_bw() +
+  labs(title = "Distance distribution of McDonald's and La Quinta in New York", 
+       x = "", y = "Distance [km]")
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## Are "denny's" any closer than the "other" restaurant?
